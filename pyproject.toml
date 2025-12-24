@@ -1,0 +1,39 @@
+[project]
+name = "clientreach-cw4"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django (>=6.0,<7.0)",
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "pillow (>=12.0.0,<13.0.0)",
+    "ipython (>=9.8.0,<10.0.0)",
+    "isort (>=7.0.0,<8.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)",
+    "black (>=25.12.0,<26.0.0)",
+    "mypy (>=1.19.1,<2.0.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+disallow_untyped_defs = true
+warn_return_any = true
+exclude = 'venv'
+
+[tool.black]
+line-length = 119
+exclude = ".git"
+
+ [tool.isort]
+line_length = 119
+force_single_line = true
+combine_as_imports = true
+combine_straight_imports = true

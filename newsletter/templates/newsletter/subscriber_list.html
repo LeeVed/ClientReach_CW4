@@ -1,0 +1,98 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Список получателей{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Список получателей</h2>
+
+    <!-- Определяем, является ли пользователь менеджером -->
+    {% for group in user.groups.all %}
+        {% if group.name == 'managers' %}
+            {% with is_manager=True %}{% endwith %}
+        {% endif %}
+    {% empty %}
+        {% with is_manager=False %}{% endwith %}
+    {% endfor %}
+
+    <!-- Определяем, является ли пользователь специальным (менеджер или суперпользователь) -->
+    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+        {% with is_special_user=True %}{% endwith %}
+    {% else %}
+        {% with is_special_user=False %}{% endwith %}
+    {% endif %}
+
+    <!-- Кнопка создания только для НЕ менеджеров (суперпользователям можно) -->
+    {% if not user.groups.filter.name == 'managers' %}
+    <div class="mb-3">
+        <a href="{% url 'newsletter:subscriber_create' %}" class="btn btn-success">
+            + Добавить получателя
+        </a>
+    </div>
+    {% endif %}
+
+    {% if subscribers %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>ФИО</th>
+                    <th>Комментарий</th>
+                    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+                        <th>Владелец</th>
+                    {% endif %}
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subscriber in subscribers %}
+                <tr>
+                    <td>{{ subscriber.email }}</td>
+                    <td>{{ subscriber.full_name|default:"—" }}</td>
+                    <td>{{ subscriber.comment|default:"—"|truncatechars:30 }}</td>
+                    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+                    <td>
+                        <small class="text-muted">{{ subscriber.owner.email }}</small>
+                    </td>
+                    {% endif %}
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'newsletter:subscriber_detail' subscriber.pk %}"
+                               class="btn btn-outline-primary">
+                                Просмотр
+                            </a>
+
+                            <!-- Кнопки редактирования/удаления:
+                                 - Суперпользователь: ВИДИТ все кнопки
+                                 - Менеджер: НЕ ВИДИТ кнопки
+                                 - Обычный пользователь: ВИДИТ только для своих подписчиков -->
+                            {% if not user.groups.filter.name == 'managers' and subscriber.owner == user or user.is_superuser %}
+                                <a href="{% url 'newsletter:subscriber_update' subscriber.pk %}"
+                                   class="btn btn-outline-warning">
+                                    Редактировать
+                                </a>
+                                <a href="{% url 'newsletter:subscriber_delete' subscriber.pk %}"
+                                   class="btn btn-outline-danger">
+                                    Удалить
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+            Нет получателей в системе.
+        {% else %}
+            У вас пока нет получателей.
+            <a href="{% url 'newsletter:subscriber_create' %}">Добавьте первого</a>.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

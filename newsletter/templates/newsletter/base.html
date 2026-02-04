@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta http-equiv="Cache-Control" content="max-age=300">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ClientReach{% endblock %}</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'newsletter:home' %}">
+                ClientReach
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'newsletter:home' %}">Главная</a>
+                <a class="nav-link" href="{% url 'newsletter:subscriber_list' %}">Получатели</a>
+                <a class="nav-link" href="{% url 'newsletter:message_list' %}">Сообщения</a>
+                <a class="nav-link" href="{% url 'newsletter:dispatch_list' %}">Рассылки</a>
+
+                <!-- Блок пользователя -->
+                {% if user.is_authenticated %}
+                    <!-- Ссылка на статистику -->
+                    <a class="nav-link" href="{% url 'newsletter:user_statistics' %}">
+                        Статистика
+                    </a>
+
+                    <!-- Ссылка на список пользователей (ТОЛЬКО для менеджеров) -->
+                    {% for group in user.groups.all %}
+                        {% if group.name == 'managers' %}
+                            <a class="nav-link" href="{% url 'newsletter:user_list' %}">
+                                Пользователи
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Информация о пользователе -->
+                    <span class="nav-link text-light">
+                        {{ user.email }}
+                    </span>
+
+                    <!-- Выход -->
+                    <a class="nav-link" href="{% url 'users:logout' %}">
+                        Выйти
+                    </a>
+
+                    <!-- Админка -->
+                    <a class="nav-link" href="/admin/" target="_blank">Админка</a>
+                {% else %}
+                    <!-- Для неавторизованных -->
+                    <a class="nav-link" href="{% url 'users:login' %}">
+                        Войти
+                    </a>
+                    <a class="nav-link" href="{% url 'users:register' %}">
+                        Регистрация
+                    </a>
+                    <a class="nav-link" href="/admin/" target="_blank">Админка</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основное содержимое -->
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        <!-- Контент страниц будет здесь -->
+        {% endblock %}
+    </div>
+
+    <!-- Подвал -->
+    <footer class="mt-5 pt-3 border-top text-center text-muted">
+        <div class="container">
+            <small>
+                &copy; {% now "Y" %} ClientReach. Система управления рассылками.
+            </small>
+        </div>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

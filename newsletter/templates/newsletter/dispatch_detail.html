@@ -1,0 +1,194 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Рассылка: {{ dispatch.message.subject }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header {% if dispatch.status == 'started' %}bg-success{% elif dispatch.status == 'completed' %}bg-warning text-dark{% else %}bg-secondary{% endif %} text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Рассылка #{{ dispatch.pk }}</h3>
+
+                    <!-- Информация о владельце для менеджера/суперпользователя -->
+                    {% if is_special_user %}
+                        <span class="badge bg-light text-dark">
+                            Владелец: {{ dispatch.owner.email }}
+                        </span>
+                    {% endif %}
+
+                    <!-- Кнопки редактирования/удаления -->
+                    {% if can_edit or can_delete %}
+                        <div class="btn-group">
+                            {% if can_edit %}
+                            <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}"
+                               class="btn btn-warning btn-sm">
+                                Редактировать
+                            </a>
+                            {% endif %}
+                            {% if can_delete %}
+                            <a href="{% url 'newsletter:dispatch_delete' dispatch.pk %}"
+                               class="btn btn-danger btn-sm">
+                                Удалить
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- Кнопка отправки -->
+                {% if can_send and dispatch.recipients.count > 0 %}
+                <div class="alert alert-info mb-4">
+                    <h5>Запустить рассылку</h5>
+                    <form method="post" action="{% url 'newsletter:dispatch_send' dispatch.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">
+                            ▶ Отправить {{ dispatch.recipients.count }} писем
+                        </button>
+                    </form>
+                </div>
+                {% elif dispatch.recipients.count == 0 and can_edit %}
+                <div class="alert alert-warning mb-4">
+                    <h5>Нет получателей</h5>
+                    <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}" class="btn btn-outline-warning">
+                        Добавить получателей
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Управление для менеджера/суперпользователя -->
+                {% if can_toggle %}
+                <div class="alert {% if dispatch.status == 'started' %}alert-warning{% else %}alert-info{% endif %} mb-4">
+                    <h5>Управление рассылкой</h5>
+                    {% if dispatch.status == 'started' %}
+                        <a href="{% url 'newsletter:dispatch_toggle_status' dispatch.pk %}"
+                           class="btn btn-warning">
+                            Отключить рассылку
+                        </a>
+                    {% elif dispatch.status == 'created' %}
+                        <a href="{% url 'newsletter:dispatch_toggle_status' dispatch.pk %}"
+                           class="btn btn-success">
+                            Включить рассылку
+                        </a>
+                    {% else %}
+                        <span class="badge bg-secondary">Рассылка завершена</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Статус и даты -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Статус:</h5>
+                        {% if dispatch.status == "created" %}
+                            <span class="badge bg-secondary fs-6">Создана</span>
+                        {% elif dispatch.status == "started" %}
+                            <span class="badge bg-success fs-6">Запущена</span>
+                        {% elif dispatch.status == "completed" %}
+                            <span class="badge bg-warning text-dark fs-6">Завершена</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Временные рамки:</h5>
+                        <p><strong>Начало:</strong> {{ dispatch.first_sent_at|date:"d.m.Y H:i" }}</p>
+                        <p><strong>Окончание:</strong> {{ dispatch.end_sent_at|date:"d.m.Y H:i" }}</p>
+                        {% if is_special_user %}
+                            <p><small class="text-muted">Владелец: {{ dispatch.owner.email }}</small></p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Остальная часть шаблона без изменений -->
+                <!-- Сообщение -->
+                <div class="mb-4">
+                    <h5>Сообщение:</h5>
+                    <div class="border rounded p-3 bg-light">
+                        <p><strong>Тема:</strong> {{ dispatch.message.subject }}</p>
+                        <p><strong>Текст:</strong></p>
+                        <div class="ps-3">{{ dispatch.message.text|linebreaks }}</div>
+                    </div>
+                </div>
+
+                <!-- Получатели -->
+                <div class="mb-4">
+                    <h5>Получатели ({{ dispatch.recipients.count }}):</h5>
+                    <!-- ... существующий код ... -->
+                </div>
+
+                <!-- Статистика -->
+                <div class="border-top pt-3 mt-4">
+                    <h5>Статистика отправки:</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Всего получателей:</strong> {{ dispatch.recipients.count }}</p>
+                            <p><strong>Успешных отправок:</strong>
+                                <span class="badge bg-success">{{ success_logs_count|default:0 }}</span>
+                            </p>
+                            <p><strong>Неудачных отправок:</strong>
+                                <span class="badge bg-danger">{{ failed_logs_count|default:0 }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Последняя отправка:</strong>
+                                {% if dispatch.logs.last %}
+                                    {{ dispatch.logs.last.attempt_time|date:"d.m.Y H:i" }}
+                                {% else %}
+                                    Не было отправок
+                                {% endif %}
+                            </p>
+                            <p><strong>Всего попыток:</strong>
+                                <span class="badge bg-info">{{ dispatch.logs.count }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'newsletter:dispatch_list' %}" class="btn btn-secondary">
+                        ← Назад к списку
+                    </a>
+                    <div class="btn-group">
+                        {% if can_edit %}
+                        <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}"
+                           class="btn btn-outline-warning">
+                            Редактировать
+                        </a>
+                        {% endif %}
+                        {% if can_delete %}
+                        <a href="{% url 'newsletter:dispatch_delete' dispatch.pk %}"
+                           class="btn btn-outline-danger">
+                            Удалить
+                        </a>
+                        {% endif %}
+                        {% if can_send and dispatch.recipients.count > 0 %}
+                        <form method="post" action="{% url 'newsletter:dispatch_send' dispatch.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success">
+                                Отправить
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% if can_toggle %}
+                            {% if dispatch.status == 'started' %}
+                            <a href="{% url 'newsletter:dispatch_toggle_status' dispatch.pk %}"
+                               class="btn btn-outline-warning">
+                                Отключить
+                            </a>
+                            {% elif dispatch.status == 'created' %}
+                            <a href="{% url 'newsletter:dispatch_toggle_status' dispatch.pk %}"
+                               class="btn btn-outline-success">
+                                Включить
+                            </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

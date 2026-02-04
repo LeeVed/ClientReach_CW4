@@ -1,0 +1,75 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Список рассылок{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Список рассылок</h2>
+
+    <!-- Кнопка создания -->
+    {% if not user.groups.filter.name == 'managers' %}
+    <div class="mb-3">
+        <a href="{% url 'newsletter:dispatch_create' %}" class="btn btn-success">
+            + Создать рассылку
+        </a>
+    </div>
+    {% endif %}
+
+    {% if dispatch_list %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Сообщение</th>
+                    <th>Статус</th>
+                    <th>Даты</th>
+                    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+                        <th>Владелец</th>
+                    {% endif %}
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dispatch in dispatch_list %}
+                <tr>
+                    <td>#{{ dispatch.pk }}</td>
+                    <td>{{ dispatch.message.subject|truncatechars:50 }}</td>
+                    <td>
+                        <!-- ... статус ... -->
+                    </td>
+                    <td>
+                        <small>{{ dispatch.first_sent_at|date:"d.m.Y" }} - {{ dispatch.end_sent_at|date:"d.m.Y" }}</small>
+                    </td>
+                    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+                    <td><small class="text-muted">{{ dispatch.owner.email }}</small></td>
+                    {% endif %}
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{% url 'newsletter:dispatch_detail' dispatch.pk %}"
+                               class="btn btn-outline-primary">Просмотр</a>
+
+                            {% if not user.groups.filter.name == 'managers' and dispatch.owner == user or user.is_superuser %}
+                                <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}"
+                                   class="btn btn-outline-warning">Редакт.</a>
+                                <a href="{% url 'newsletter:dispatch_delete' dispatch.pk %}"
+                                   class="btn btn-outline-danger">Удалить</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+            Нет рассылок в системе.
+        {% else %}
+            У вас пока нет рассылок.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}ClientReach - Моя статистика{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'newsletter:home' %}">Главная</a></li>
+            <li class="breadcrumb-item active">Моя статистика</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">
+        <i class="bi bi-bar-chart"></i> Статистика моих рассылок
+    </h1>
+
+    <!-- Основная статистика -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Успешные попытки</h5>
+                    <h2 class="display-3">{{ statistics.total_success_attempts }}</h2>
+                    <p class="card-text">Письма успешно отправлены</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Неуспешные попытки</h5>
+                    <h2 class="display-3">{{ statistics.total_failed_attempts }}</h2>
+                    <p class="card-text">Ошибки при отправке</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Отправлено сообщений</h5>
+                    <h2 class="display-3">{{ statistics.total_messages_sent }}</h2>
+                    <p class="card-text">Всего доставлено писем</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сводная информация -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Сводная информация</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Всего рассылок
+                            <span class="badge bg-primary rounded-pill">
+                                {{ statistics.total_dispatches }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Всего попыток отправки
+                            <span class="badge bg-secondary rounded-pill">
+                                {{ statistics.total_attempts }}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Общее количество получателей
+                            <span class="badge bg-info rounded-pill">
+                                {% with total_recipients=0 %}
+                                    {% for dispatch in statistics.dispatches_with_counts %}
+                                        {% widthratio dispatch.recipients_count 1 1 as dispatch_recipients %}
+                                        {% with total_recipients=total_recipients|add:dispatch_recipients %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                    {{ total_recipients }}
+                                {% endwith %}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-light">
+                        <h6>Пояснение:</h6>
+                        <ul class="mb-0">
+                            <li><strong>Успешные попытки</strong> - письма доставлены получателям</li>
+                            <li><strong>Неуспешные попытки</strong> - ошибки при отправке</li>
+                            <li><strong>Отправлено сообщений</strong> - успешно доставленных писем</li>
+                            <li><strong>Получатели</strong> - уникальные email-адреса в рассылках</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детализация по рассылкам -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Детализация по рассылкам</h5>
+        </div>
+        <div class="card-body">
+            {% if statistics.dispatches_with_counts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Рассылка</th>
+                            <th>Дата начала</th>
+                            <th>Дата окончания</th>
+                            <th>Статус</th>
+                            <th>Получатели</th>
+                            <th class="text-success">Успешно</th>
+                            <th class="text-danger">Неуспешно</th>
+                            <th>Процент успеха</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dispatch in statistics.dispatches_with_counts %}
+                        <tr>
+                            <td>
+                                <strong>{{ dispatch.message.subject }}</strong>
+                                <br>
+                                <small class="text-muted">{{ dispatch.message.text|truncatechars:50 }}</small>
+                            </td>
+                            <td>{{ dispatch.first_sent_at|date:"d.m.Y H:i" }}</td>
+                            <td>{{ dispatch.end_sent_at|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                {% if dispatch.status == 'created' %}
+                                    <span class="badge bg-warning">Создана</span>
+                                {% elif dispatch.status == 'started' %}
+                                    <span class="badge bg-success">Запущена</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Завершена</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ dispatch.recipients_count|default:0 }}</td>
+                            <td class="text-success fw-bold">{{ dispatch.success_count|default:0 }}</td>
+                            <td class="text-danger fw-bold">{{ dispatch.failed_count|default:0 }}</td>
+                            <td>
+                                {% with total=dispatch.success_count|add:dispatch.failed_count %}
+                                    {% if total > 0 %}
+                                        {% widthratio dispatch.success_count total 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-dark">
+                        <tr>
+                            <td colspan="4"><strong>Итого:</strong></td>
+                            <td>
+                                {% with total_recipients=0 %}
+                                    {% for dispatch in statistics.dispatches_with_counts %}
+                                        {% with total_recipients=total_recipients|add:dispatch.recipients_count %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                    {{ total_recipients }}
+                                {% endwith %}
+                            </td>
+                            <td class="text-success">{{ statistics.total_success_attempts }}</td>
+                            <td class="text-danger">{{ statistics.total_failed_attempts }}</td>
+                            <td>
+                                {% if statistics.total_attempts > 0 %}
+                                    {% widthratio statistics.total_success_attempts statistics.total_attempts 100 %}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <h5>Нет данных для отображения</h5>
+                <p>У вас пока нет созданных рассылок. Создайте первую рассылку, чтобы начать собирать статистику.</p>
+                <a href="{% url 'newsletter:dispatch_create' %}" class="btn btn-primary">
+                    Создать первую рассылку
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="mt-4 d-flex justify-content-between">
+        <a href="{% url 'newsletter:home' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> На главную
+        </a>
+        <a href="{% url 'newsletter:dispatch_list' %}" class="btn btn-primary">
+            К моим рассылкам <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+</div>
+{% endblock %}

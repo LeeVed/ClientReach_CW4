@@ -1,0 +1,76 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Пользователи сервиса{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Пользователи сервиса</h2>
+
+    {% if users %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Статус</th>
+                    <th>Роль</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_item in users %}
+                <tr>
+                    <td>{{ user_item.email }}</td>
+                    <td>
+                        {% if user_item.is_active %}
+                            <span class="badge bg-success">Активен</span>
+                        {% else %}
+                            <span class="badge bg-danger">Заблокирован</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user_item.is_superuser %}
+                            <span class="badge bg-danger">Суперпользователь</span>
+                        {% elif user_item.groups.filter.name == 'managers' %}
+                            <span class="badge bg-primary">Менеджер</span>
+                        {% elif user_item.groups.filter.name == 'users' %}
+                            <span class="badge bg-secondary">Пользователь</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">Без группы</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_superuser %}
+                            <!-- Суперпользователь может блокировать всех (кроме себя) -->
+                            {% if user_item.id != user.id %}
+                                <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
+                                   class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                    {% if user_item.is_active %}Заблокировать{% else %}Разблокировать{% endif %}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        {% else %}
+                            <!-- Менеджер может блокировать только пользователей (группа "users") -->
+                            {% if user_item.groups.filter.name == 'users' and user_item.id != user.id %}
+                                <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
+                                   class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                    {% if user_item.is_active %}Заблокировать{% else %}Разблокировать{% endif %}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Нет пользователей в системе.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

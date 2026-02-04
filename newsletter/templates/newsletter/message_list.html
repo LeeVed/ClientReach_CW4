@@ -1,0 +1,76 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Список сообщений{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Список сообщений</h2>
+
+    <!-- Кнопка создания только для НЕ менеджеров -->
+    {% if not user.groups.filter.name == 'managers' %}
+    <div class="mb-3">
+        <a href="{% url 'newsletter:message_create' %}" class="btn btn-success">
+            + Создать сообщение
+        </a>
+    </div>
+    {% endif %}
+
+    {% if message_list %}
+    <div class="row">
+        {% for message in message_list %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header {% if message.dispatches.count > 0 %}bg-info text-white{% else %}bg-light{% endif %}">
+                    <h5 class="card-title mb-0">{{ message.subject|truncatechars:50 }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ message.text|truncatechars:100 }}</p>
+                    <p class="text-muted small mb-2">
+                        <strong>Используется в:</strong> {{ message.dispatches.count }} рассылках
+                    </p>
+                    <!-- Информация о владельце для менеджеров и суперпользователей -->
+                    {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+                    <p class="text-muted small"><strong>Владелец:</strong> {{ message.owner.email }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'newsletter:message_detail' message.pk %}"
+                           class="btn btn-outline-primary btn-sm">Подробнее</a>
+
+                        <!-- Кнопки редактирования/удаления -->
+                        {% if user.is_superuser %}
+                            <!-- Суперпользователь видит все кнопки -->
+                            <div class="btn-group">
+                                <a href="{% url 'newsletter:message_update' message.pk %}"
+                                   class="btn btn-outline-warning btn-sm">Редакт.</a>
+                                <a href="{% url 'newsletter:message_delete' message.pk %}"
+                                   class="btn btn-outline-danger btn-sm">Удалить</a>
+                            </div>
+                        {% elif not user.groups.filter.name == 'managers' and message.owner == user %}
+                            <!-- Обычный пользователь видит кнопки только для своих сообщений -->
+                            <div class="btn-group">
+                                <a href="{% url 'newsletter:message_update' message.pk %}"
+                                   class="btn btn-outline-warning btn-sm">Редакт.</a>
+                                <a href="{% url 'newsletter:message_delete' message.pk %}"
+                                   class="btn btn-outline-danger btn-sm">Удалить</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <!-- Разные сообщения для разных типов пользователей -->
+        {% if user.groups.filter.name == 'managers' or user.is_superuser %}
+            Нет сообщений в системе.
+        {% else %}
+            У вас пока нет сообщений.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

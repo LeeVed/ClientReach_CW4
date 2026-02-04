@@ -1,0 +1,84 @@
+{% extends 'newsletter/base.html' %}
+
+{% block title %}Удаление рассылки{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h2 class="mb-0">Удаление рассылки</h2>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <div class="fs-1 mb-3">⚠️</div>
+                    <h4>Вы уверены, что хотите удалить рассылку?</h4>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <strong>Рассылка #{{ object.pk }}</strong><br>
+                        <small class="text-muted">
+                            Сообщение: {{ object.message.subject }}<br>
+                            Статус: {{ object.get_status_display }}<br>
+                            Получателей: {{ object.recipients.count }}
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-danger mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Внимание!</strong> Будут удалены:
+                        <ul class="mt-2 mb-0 text-start">
+                            <li>Данные о рассылке</li>
+                            {% comment %}
+                            <!-- Когда добавите логи -->
+                            <li>Все попытки отправки ({{ object.logs.count }})</li>
+                            {% endcomment %}
+                            <li>Связи с получателями</li>
+                        </ul>
+                    </div>
+                    
+                    <p class="text-muted mt-3">
+                        Это действие нельзя отменить.
+                    </p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'newsletter:dispatch_detail' object.pk %}" 
+                           class="btn btn-outline-secondary">
+                            ← Отмена
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            Да, удалить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Информация -->
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <i class="bi bi-info-circle"></i> Альтернативные действия
+            </div>
+            <div class="card-body">
+                <p>Вместо удаления вы можете:</p>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'newsletter:dispatch_update' object.pk %}" 
+                       class="btn btn-outline-warning">
+                        Редактировать рассылку
+                    </a>
+                    <a href="{% url 'newsletter:message_detail' object.message.pk %}" 
+                       class="btn btn-outline-info">
+                        Посмотреть сообщение
+                    </a>
+                    <a href="{% url 'newsletter:dispatch_list' %}" 
+                       class="btn btn-outline-secondary">
+                        Вернуться к списку
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

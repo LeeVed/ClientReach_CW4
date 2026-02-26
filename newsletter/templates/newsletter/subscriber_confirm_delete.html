@@ -1,37 +1,31 @@
 {% extends 'newsletter/base.html' %}
+{% load static %}
 
-{% block title %}Удаление получателя{% endblock %}
+{% block title %}Удаление получателя - ClientReach{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card border-danger">
             <div class="card-header bg-danger text-white">
-                <h2 class="mb-0">Удаление получателя</h2>
+                <h3 class="card-title mb-0">Подтверждение удаления</h3>
             </div>
-            <div class="card-body text-center">
-                <div class="mb-4">
-                    <div class="fs-1 mb-3">⚠️</div>
-                    <h4>Вы уверены, что хотите удалить получателя?</h4>
-                    <div class="alert alert-warning mt-3">
-                        <strong>{{ object.email }}</strong><br>
-                        {% if object.full_name %}{{ object.full_name }}{% endif %}
-                    </div>
-                    <p class="text-muted">
-                        Это действие нельзя отменить.
-                    </p>
-                </div>
-                
+            <div class="card-body">
+                <p class="lead">Вы уверены, что хотите удалить получателя?</p>
+                <p><strong>{{ subscriber.email }}</strong></p>
+                {% if subscriber.full_name %}
+                    <p>{{ subscriber.full_name }}</p>
+                {% endif %}
+
                 <form method="post">
                     {% csrf_token %}
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{% url 'newsletter:subscriber_detail' object.pk %}" 
-                           class="btn btn-outline-secondary">
-                            ← Отмена
-                        </a>
+                    <div class="d-flex justify-content-between">
                         <button type="submit" class="btn btn-danger">
                             Да, удалить
                         </button>
+                        <a href="{% url 'newsletter:subscriber_detail' subscriber.pk %}" class="btn btn-secondary">
+                            Отмена
+                        </a>
                     </div>
                 </form>
             </div>

@@ -29,6 +29,7 @@
                 <a class="nav-link" href="{% url 'newsletter:subscriber_list' %}">Получатели</a>
                 <a class="nav-link" href="{% url 'newsletter:message_list' %}">Сообщения</a>
                 <a class="nav-link" href="{% url 'newsletter:dispatch_list' %}">Рассылки</a>
+                <a class="nav-link" href="{% url 'newsletter:dispatch_log_list' %}">Логи рассылок</a>
 
                 <!-- Блок пользователя -->
                 {% if user.is_authenticated %}
@@ -37,14 +38,12 @@
                         Статистика
                     </a>
 
-                    <!-- Ссылка на список пользователей (ТОЛЬКО для менеджеров) -->
-                    {% for group in user.groups.all %}
-                        {% if group.name == 'managers' %}
-                            <a class="nav-link" href="{% url 'newsletter:user_list' %}">
-                                Пользователи
-                            </a>
-                        {% endif %}
-                    {% endfor %}
+                    <!-- Ссылка на список пользователей (ТОЛЬКО для суперпользователя и менеджеров) -->
+                    {% if user.is_superuser or user.groups.filter.name == 'managers' %}
+                        <a class="nav-link" href="{% url 'newsletter:user_list' %}">
+                            Пользователи
+                        </a>
+                    {% endif %}
 
                     <!-- Информация о пользователе -->
                     <span class="nav-link text-light">

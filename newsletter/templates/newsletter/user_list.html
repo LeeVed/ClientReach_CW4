@@ -1,19 +1,22 @@
 {% extends 'newsletter/base.html' %}
+{% load static %}
 
-{% block title %}Пользователи сервиса{% endblock %}
+{% block title %}Пользователи - ClientReach{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">Пользователи сервиса</h2>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Пользователи сервиса</h2>
+    </div>
 
-    {% if users %}
     <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-light">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
                 <tr>
                     <th>Email</th>
+                    <th>Имя</th>
+                    <th>Группа</th>
                     <th>Статус</th>
-                    <th>Роль</th>
                     <th>Действия</th>
                 </tr>
             </thead>
@@ -21,56 +24,46 @@
                 {% for user_item in users %}
                 <tr>
                     <td>{{ user_item.email }}</td>
+                    <td>{{ user_item.first_name|default:"—" }}</td>
+                    <td>
+                        {% if user_item.is_superuser %}
+                            <span class="badge bg-danger">Суперпользователь</span>
+                        {% elif user_item.groups.all.0.name == 'managers' %}
+                            <span class="badge bg-warning">Менеджер</span>
+                        {% else %}
+                            <span class="badge bg-info">Пользователь</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if user_item.is_active %}
                             <span class="badge bg-success">Активен</span>
                         {% else %}
-                            <span class="badge bg-danger">Заблокирован</span>
+                            <span class="badge bg-secondary">Заблокирован</span>
                         {% endif %}
                     </td>
                     <td>
-                        {% if user_item.is_superuser %}
-                            <span class="badge bg-danger">Суперпользователь</span>
-                        {% elif user_item.groups.filter.name == 'managers' %}
-                            <span class="badge bg-primary">Менеджер</span>
-                        {% elif user_item.groups.filter.name == 'users' %}
-                            <span class="badge bg-secondary">Пользователь</span>
+                        {% if user_item != request.user %}
+                            <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
+                               class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                               onclick="return confirm('Вы уверены?')">
+                                {% if user_item.is_active %}
+                                    Заблокировать
+                                {% else %}
+                                    Разблокировать
+                                {% endif %}
+                            </a>
                         {% else %}
-                            <span class="badge bg-light text-dark">Без группы</span>
+                            <span class="text-muted">Это вы</span>
                         {% endif %}
                     </td>
-                    <td>
-                        {% if user.is_superuser %}
-                            <!-- Суперпользователь может блокировать всех (кроме себя) -->
-                            {% if user_item.id != user.id %}
-                                <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
-                                   class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}">
-                                    {% if user_item.is_active %}Заблокировать{% else %}Разблокировать{% endif %}
-                                </a>
-                            {% else %}
-                                <span class="text-muted">—</span>
-                            {% endif %}
-                        {% else %}
-                            <!-- Менеджер может блокировать только пользователей (группа "users") -->
-                            {% if user_item.groups.filter.name == 'users' and user_item.id != user.id %}
-                                <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
-                                   class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}">
-                                    {% if user_item.is_active %}Заблокировать{% else %}Разблокировать{% endif %}
-                                </a>
-                            {% else %}
-                                <span class="text-muted">—</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Нет пользователей</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    {% else %}
-    <div class="alert alert-info">
-        Нет пользователей в системе.
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

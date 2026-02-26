@@ -1,0 +1,152 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}Логи рассылок - ClientReach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Логи рассылок</h2>
+        <div>
+            <span class="text-muted">Всего записей: {{ page_obj.paginator.count }}</span>
+        </div>
+    </div>
+
+    <!-- Форма фильтрации -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Статус</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="trigger_type" class="form-label">Тип запуска</label>
+                    <select name="trigger_type" id="trigger_type" class="form-select">
+                        <option value="">Все типы</option>
+                        {% for value, label in trigger_choices %}
+                            <option value="{{ value }}" {% if request.GET.trigger_type == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                        <a href="{% url 'newsletter:dispatch_log_list' %}" class="btn btn-secondary">
+                            Сбросить
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Таблица логов -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Дата и время</th>
+                    <th>Рассылка</th>
+                    <th>Получатель</th>
+                    <th>Статус</th>
+                    <th>Тип запуска</th>
+                    <th>Ответ сервера</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.pk }}</td>
+                    <td>{{ log.attempt_time|date:"d.m.Y H:i:s" }}</td>
+                    <td>
+                        <a href="{% url 'newsletter:dispatch_detail' log.dispatch.pk %}">
+                            {{ log.dispatch.message.subject|truncatechars:40 }}
+                        </a>
+                    </td>
+                    <td>{{ log.recipient.email|default:"—" }}</td>
+                    <td>
+                        {% if log.status == 'success' %}
+                            <span class="badge bg-success">Успешно</span>
+                        {% else %}
+                            <span class="badge bg-danger">Ошибка</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.trigger_type == 'auto' %}
+                            <span class="badge bg-info">Авто</span>
+                        {% else %}
+                            <span class="badge bg-warning">Ручной</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small class="text-muted" title="{{ log.server_response }}">
+                            {{ log.server_response|truncatechars:30 }}
+                        </small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <p class="text-muted mb-0">Записей не найдено</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Пагинация -->
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                    <span aria-hidden="true">&raquo;&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -158,37 +158,27 @@ class Dispatch(models.Model):
         return f"Рассылка #{self.pk} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
-        print(f"=== save() вызван для рассылки ===")
-        print(f"self.pk: {self.pk}")
-        print(f"self.status: {self.status}")
-        print(f"self.first_sent_at: {self.first_sent_at}")
-        print(f"self.end_sent_at: {self.end_sent_at}")
-        print(f"now: {timezone.now()}")
+        """
+        Автоматическая валидация и расчет next_sent_at
+        """
+        skip_validation = kwargs.pop('skip_validation', False)
 
+        # При создании новой рассылки устанавливаем next_sent_at
         if not self.pk and self.status == "created":
-            print("✓ Новая рассылка, статус 'created'")
             self.next_sent_at = self.first_sent_at
-            print(f"✓ next_sent_at установлен: {self.next_sent_at}")
 
             # Если время уже наступило - сразу запускаем
             now = timezone.now()
             if self.first_sent_at <= now <= self.end_sent_at:
-                print("✓ Время наступило! Меняем статус на started")
                 self.status = "started"
                 # Сразу отправляем через services
                 from .services import send_dispatch
-                print("✓ Вызываем send_dispatch")
-                result = send_dispatch(self, trigger_type="auto")
-                print(f"✓ Результат send_dispatch: {result}")
-            else:
-                print("✗ Время еще не наступило или уже прошло")
-                print(f"  first_sent_at <= now: {self.first_sent_at <= now}")
-                print(f"  now <= end_sent_at: {now <= self.end_sent_at}")
+                send_dispatch(self, trigger_type="auto")
 
-        self.clean()
-        print("✓ Вызов super().save()")
+        if not skip_validation:
+            self.clean()
+
         super().save(*args, **kwargs)
-        print("=== save() завершен ===")
 
     def clean(self):
         """Валидация данных перед сохранением"""

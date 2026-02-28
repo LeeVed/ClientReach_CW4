@@ -1,0 +1,34 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}Удаление рассылки - ClientReach{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="card-title mb-0">Подтверждение удаления</h3>
+            </div>
+            <div class="card-body">
+                <p class="lead">Вы уверены, что хотите удалить рассылку?</p>
+                <p><strong>{{ dispatch.message.subject }}</strong></p>
+                <p>Статус: {{ dispatch.get_status_display }}</p>
+                <p>Периодичность: {{ dispatch.get_periodicity_display }}</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-danger">
+                            Да, удалить
+                        </button>
+                        <a href="{% url 'newsletter:dispatch_detail' dispatch.pk %}" class="btn btn-secondary">
+                            Отмена
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}{{ subscriber.email }} - ClientReach{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Детали получателя</h3>
+                <div>
+                    {% if subscriber.owner == user or user.is_superuser %}
+                        <a href="{% url 'newsletter:subscriber_update' subscriber.pk %}" class="btn btn-warning btn-sm">
+                            Редактировать
+                        </a>
+                        <a href="{% url 'newsletter:subscriber_delete' subscriber.pk %}" class="btn btn-danger btn-sm">
+                            Удалить
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'newsletter:subscriber_list' %}" class="btn btn-secondary btn-sm">
+                        Назад
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th style="width: 30%">Email:</th>
+                        <td>{{ subscriber.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Ф.И.О.:</th>
+                        <td>{{ subscriber.full_name|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Комментарий:</th>
+                        <td>{{ subscriber.comment|linebreaks|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Дата создания:</th>
+                        <td>{{ subscriber.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Владелец:</th>
+                        <td>{{ subscriber.owner.email|default:"—" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

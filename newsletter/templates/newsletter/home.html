@@ -1,0 +1,183 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}ClientReach - Главная страница{% endblock %}
+
+{% block content %}
+<div class="mt-5">
+    <h1 class="text-center mb-5">Статистика рассылок</h1>
+
+    <div class="row text-center mb-5">
+        <!-- 1. Все рассылки -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="display-1">{{ total_dispatches }}</h2>
+                    <p class="h5">Всего рассылок</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Активные рассылки -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="display-1">{{ active_dispatches }}</h2>
+                    <p class="h5">Активных рассылок</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Уникальные получатели -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="display-1">{{ unique_recipients }}</h2>
+                    <p class="h5">Уникальных получателей</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Блок для личной статистики пользователя -->
+    {% if user.is_authenticated %}
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Ваша личная статистика
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12 text-center mb-3">
+                            <p class="lead">Приветствуем, {{ user.email }}!</p>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h4 class="card-title">Ваших рассылок</h4>
+                                    <h2 class="display-4 text-primary">
+                                        {{ user_total_dispatches|default:"0" }}
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h4 class="card-title">Активных</h4>
+                                    <h2 class="display-4 text-success">
+                                        {{ user_active_dispatches|default:"0" }}
+                                    </h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h4 class="card-title">Ваши показатели</h4>
+                                    <p>Посмотрите детальную статистику ваших рассылок</p>
+                                    <a href="{% url 'newsletter:user_statistics' %}"
+                                       class="btn btn-primary btn-lg mt-2">
+                                        Моя статистика
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Панель быстрого доступа -->
+    <div class="row text-center">
+        <div class="col-md-12 mb-4">
+            <h2 class="mb-4">Быстрый доступ</h2>
+        </div>
+
+        <!-- Управление получателями -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Получатели</h4>
+                    <p class="card-text">Управление списком получателей рассылок</p>
+                    <div class="mt-4">
+                        <a href="{% url 'newsletter:subscriber_list' %}" class="btn btn-primary">
+                            Перейти к получателям
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление сообщениями -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Сообщения</h4>
+                    <p class="card-text">Создание и редактирование текстов рассылок</p>
+                    <div class="mt-4">
+                        <a href="{% url 'newsletter:message_list' %}" class="btn btn-primary">
+                            Перейти к сообщениям
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление рассылками -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="card-title">Рассылки</h4>
+                    <p class="card-text">Создание и управление рассылками</p>
+                    <div class="mt-4">
+                        <a href="{% url 'newsletter:dispatch_list' %}" class="btn btn-primary">
+                            Перейти к рассылкам
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Быстрые действия -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Быстрые действия</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <a href="{% url 'newsletter:subscriber_create' %}" class="btn btn-success btn-lg w-100 mb-2">
+                                Добавить получателя
+                            </a>
+                            <small class="text-muted">Создать нового получателя рассылок</small>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <a href="{% url 'newsletter:message_create' %}" class="btn btn-success btn-lg w-100 mb-2">
+                                Создать сообщение
+                            </a>
+                            <small class="text-muted">Создать новый текст для рассылки</small>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <a href="{% url 'newsletter:dispatch_create' %}" class="btn btn-success btn-lg w-100 mb-2">
+                                Создать рассылку
+                            </a>
+                            <small class="text-muted">Запустить новую рассылку</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

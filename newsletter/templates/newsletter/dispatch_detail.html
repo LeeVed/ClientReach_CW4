@@ -1,0 +1,150 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}{{ dispatch.message.subject }} - ClientReach{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">Детали рассылки</h3>
+                <div>
+                    {% if can_edit %}
+                        <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}" class="btn btn-warning btn-sm">
+                            Редактировать
+                        </a>
+                    {% endif %}
+                    {% if can_delete %}
+                        <a href="{% url 'newsletter:dispatch_delete' dispatch.pk %}" class="btn btn-danger btn-sm">
+                            Удалить
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'newsletter:dispatch_list' %}" class="btn btn-secondary btn-sm">
+                        Назад
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th style="width: 30%">Сообщение:</th>
+                        <td>
+                            <a href="{% url 'newsletter:message_detail' dispatch.message.pk %}">
+                                {{ dispatch.message.subject }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if dispatch.status == 'created' %}
+                                <span class="badge bg-secondary">Создана</span>
+                            {% elif dispatch.status == 'started' %}
+                                <span class="badge bg-success">Запущена</span>
+                            {% elif dispatch.status == 'paused' %}
+                                <span class="badge bg-warning">Приостановлена</span>
+                            {% elif dispatch.status == 'completed' %}
+                                <span class="badge bg-info">Завершена</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Периодичность:</th>
+                        <td>{{ dispatch.get_periodicity_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Начало:</th>
+                        <td>{{ dispatch.first_sent_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Окончание:</th>
+                        <td>{{ dispatch.end_sent_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Последняя отправка:</th>
+                        <td>{{ dispatch.last_sent_at|date:"d.m.Y H:i"|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Следующая отправка:</th>
+                        <td>{{ dispatch.next_sent_at|date:"d.m.Y H:i"|default:"—" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Получателей:</th>
+                        <td>{{ dispatch.recipients.count }}</td>
+                    </tr>
+                    <tr>
+                        <th>Владелец:</th>
+                        <td>{{ dispatch.owner.email }}</td>
+                    </tr>
+                </table>
+
+                {% if can_send %}
+                    <a href="{% url 'newsletter:dispatch_send' dispatch.pk %}" class="btn btn-success"
+                       onclick="return confirm('Запустить рассылку?')">
+                        Запустить рассылку
+                    </a>
+                {% endif %}
+
+                {% if can_pause %}
+                    <a href="{% url 'newsletter:dispatch_pause' dispatch.pk %}" class="btn btn-warning"
+                       onclick="return confirm('Приостановить рассылку?')">
+                        Приостановить
+                    </a>
+                {% endif %}
+
+                {% if can_resume %}
+                    <a href="{% url 'newsletter:dispatch_resume' dispatch.pk %}" class="btn btn-success"
+                       onclick="return confirm('Возобновить рассылку?')">
+                        Возобновить
+                    </a>
+                {% endif %}
+
+                {% if can_toggle %}
+                    <a href="{% url 'newsletter:dispatch_toggle_status' dispatch.pk %}" class="btn btn-secondary"
+                       onclick="return confirm('Изменить статус?')">
+                        Переключить статус
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Получатели -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Получатели ({{ dispatch.recipients.count }})</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% for recipient in dispatch.recipients.all %}
+                        <li class="list-group-item">
+                            <a href="{% url 'newsletter:subscriber_detail' recipient.pk %}">
+                                {{ recipient.email }}
+                            </a>
+                            {% if recipient.full_name %}
+                                <small class="text-muted">({{ recipient.full_name }})</small>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">Нет получателей</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Логи отправки -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Логи отправки</h4>
+            </div>
+            <div class="card-body">
+                <p>Успешно: <span class="badge bg-success">{{ success_logs_count }}</span></p>
+                <p>Ошибок: <span class="badge bg-danger">{{ failed_logs_count }}</span></p>
+                <a href="{% url 'newsletter:dispatch_log_list' %}?dispatch={{ dispatch.pk }}" class="btn btn-sm btn-info">
+                    Все логи рассылки
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

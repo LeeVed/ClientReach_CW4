@@ -1,0 +1,69 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}Пользователи - ClientReach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Пользователи сервиса</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Email</th>
+                    <th>Имя</th>
+                    <th>Группа</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_item in users %}
+                <tr>
+                    <td>{{ user_item.email }}</td>
+                    <td>{{ user_item.first_name|default:"—" }}</td>
+                    <td>
+                        {% if user_item.is_superuser %}
+                            <span class="badge bg-danger">Суперпользователь</span>
+                        {% elif user_item.groups.all.0.name == 'managers' %}
+                            <span class="badge bg-warning">Менеджер</span>
+                        {% else %}
+                            <span class="badge bg-info">Пользователь</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user_item.is_active %}
+                            <span class="badge bg-success">Активен</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Заблокирован</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user_item != request.user %}
+                            <a href="{% url 'newsletter:user_toggle_block' user_item.pk %}"
+                               class="btn btn-sm {% if user_item.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                               onclick="return confirm('Вы уверены?')">
+                                {% if user_item.is_active %}
+                                    Заблокировать
+                                {% else %}
+                                    Разблокировать
+                                {% endif %}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Это вы</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Нет пользователей</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

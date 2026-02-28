@@ -1,0 +1,60 @@
+{% extends 'newsletter/base.html' %}
+{% load static %}
+
+{% block title %}Рассылки - ClientReach{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Рассылки</h2>
+    {% if not user.groups.all.0.name == 'managers' %}
+        <a href="{% url 'newsletter:dispatch_create' %}" class="btn btn-primary">
+            Создать рассылку
+        </a>
+    {% endif %}
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Сообщение</th>
+            <th>Статус</th>
+            <th>Периодичность</th>
+            <th>Начало</th>
+            <th>Окончание</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dispatch in dispatch_list %}
+        <tr>
+            <td>{{ dispatch.message.subject|truncatechars:40 }}</td>
+            <td>
+                {% if dispatch.status == 'created' %}
+                    <span class="badge bg-secondary">Создана</span>
+                {% elif dispatch.status == 'started' %}
+                    <span class="badge bg-success">Запущена</span>
+                {% elif dispatch.status == 'paused' %}
+                    <span class="badge bg-warning">Приостановлена</span>
+                {% elif dispatch.status == 'completed' %}
+                    <span class="badge bg-info">Завершена</span>
+                {% endif %}
+            </td>
+            <td>{{ dispatch.get_periodicity_display }}</td>
+            <td>{{ dispatch.first_sent_at|date:"d.m.Y H:i" }}</td>
+            <td>{{ dispatch.end_sent_at|date:"d.m.Y H:i" }}</td>
+            <td>
+                <a href="{% url 'newsletter:dispatch_detail' dispatch.pk %}" class="btn btn-sm btn-info">Просмотр</a>
+                {% if dispatch.owner == user or user.is_superuser %}
+                    <a href="{% url 'newsletter:dispatch_update' dispatch.pk %}" class="btn btn-sm btn-warning">Ред.</a>
+                    <a href="{% url 'newsletter:dispatch_delete' dispatch.pk %}" class="btn btn-sm btn-danger">Уд.</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center">Нет рассылок</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
